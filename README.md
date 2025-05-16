@@ -10,6 +10,18 @@ This proposal also leads to a simple extension of deep ensembles, improving the 
 
 
 
+## Project structure:
+
+- `uncertainty/main.py` trains a model. Options are provided to train either a conventional neural network or an MC-Dropout model, and to specify the dataset and architecture.
+
+- `uncertainty/analysis/main.py` reproduces the experiments from the paper using trained models. It computes statistics such as accuracy, negative log-likelihood (NLL), Brier score, cross-entropy, and expected calibration error (ECE). It also generates reliability diagrams and dataset shift plots.
+
+Importantly, since our method is post-hoc, `analysis/main.py` operates on a pre-trained model. It expects an implementation of the `ANN` class, which defines a `forward` function (see `./shared/abstract_model.py`). This is an abstract class with various concrete subclasses—e.g., for vision architectures, 1D signal architectures, MC-Dropout models, or ensemble models—defined in `./uncertainty/uq_through_redundancy.py`.
+
+The post-hoc uncertainty estimation mechanisms are implemented as wrappers around this abstract `ANN` class. See `./uncertainty/uq_through_redundancy/uq_predictor.py`, where different post-hoc methods are defined. These methods typically use the `ANN`'s forward pass to obtain logits, followed by post-processing.
+
+Our variance-based smoothing method is implemented in the classes `StdBasedSoftmaxRelaxationPredictor` and `StdBasedSoftmaxRelaxationPredictor4Ensemble` for the ensemble experiments described in the paper (where we no longer assume informative sub-patches).
+
 ## Datasets:
 
 1. Radio: download from [Google Drive](https://drive.google.com/drive/folders/14_K8s2uzS8qTCoZv9reSJ9M3M2GNAeVm?usp=drive_link) and save under `./data/RadioIdentification/*.pth`
@@ -41,3 +53,4 @@ python3 -m uncertainty.analysis.main --method UQ_rednd --num_models 1 --model_na
 ```
 
 The experiments for the other datasets can be executed similarly by overwriting the flag `--dataset RADIO` into `CIFAR10` or `LIBRISPEECH_GIM_SUBSET`. See `./shared/hyperparameter` for a list of overwritable variables and their respective values.
+
